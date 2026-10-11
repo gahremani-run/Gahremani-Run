@@ -1063,7 +1063,7 @@ function animate(now){
    if(spawn<=0){
      const r=Math.random();
      if(r<.34)addTrain(-115); else if(r<.52)addBoxObstacle(-115); else if(r<.66)addHardTruck(-115); else if(r<.80)addHardWall(-115); else spawnCoinPattern(-105);
-     spawn=Math.max(22,56-worldSpeed*27)+Math.random()*16;
+     spawn=Math.max(20,51-worldSpeed*27)+Math.random()*14;
    }
    // Coin waves: no three-lane wall at the same depth; occasional diagonal trails encourage lane changes.
    coinSpawn-=dt;
