@@ -1,6 +1,7 @@
-
 const SUPABASE_URL = 'https://rjvjgxwfunafqwpnzwne.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_u_SupvLT_Ls43HyCJlf5dQ_G9AyF0kC';
+const PLAYER_NAME_KEY = 'gahremaniRunLeaderboardName';
+const CLOUD_CODE_KEY = 'gahremaniCloudSave_v1';
 
 const list = document.querySelector('#highScores');
 const gameover = document.querySelector('#gameover');
@@ -12,87 +13,125 @@ function escapeText(value) {
   }[c]));
 }
 
+function normalizeName(value) {
+  return String(value ?? '').trim().replace(/[<>]/g, '').slice(0, 20);
+}
+
+function getOrCreateRecoveryCode() {
+  let code = localStorage.getItem(CLOUD_CODE_KEY);
+  if (!code) {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    code = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    localStorage.setItem(CLOUD_CODE_KEY, code);
+  }
+  return code;
+}
+
+async function rpc(name, payload) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    cache: 'no-store'
+  });
+  if (!response.ok) throw new Error(`RPC ${name} failed (${response.status})`);
+  return response.json();
+}
+
 async function showGlobalScores() {
   if (!list) return;
-
   try {
     const response = await fetch(
-      SUPABASE_URL +
-      '/rest/v1/leaderboard?select=player_name,score&order=score.desc&limit=5',
+      SUPABASE_URL + '/rest/v1/leaderboard?select=player_name,score&order=score.desc&limit=5',
       { headers: { apikey: SUPABASE_KEY }, cache: 'no-store' }
     );
-
     if (!response.ok) throw new Error('Could not load scores');
-
     const rows = await response.json();
-
     list.innerHTML = rows.length
-      ? rows.map((row, i) =>
-          `<li><span>${i + 1}.</span> ` +
-          `<span>${escapeText(row.player_name)}</span> ` +
-          `<b>${Math.floor(Number(row.score) || 0).toLocaleString('fa-IR')}</b></li>`
-        ).join('')
+      ? rows.map((row, i) => `<li><span>${i + 1}.</span> <span>${escapeText(row.player_name)}</span> <b>${Math.floor(Number(row.score) || 0).toLocaleString('fa-IR')}</b></li>`).join('')
       : '<li>هنوز رکورد جهانی ثبت نشده</li>';
   } catch (error) {
     console.warn('Global leaderboard unavailable:', error);
   }
 }
 
-async function submitGlobalScore(score) {
-  try {
-    let name = localStorage.getItem('gahremaniRunLeaderboardName');
+async function getUniqueName() {
+  let name = normalizeName(localStorage.getItem(PLAYER_NAME_KEY));
+  const recoveryCode = getOrCreateRecoveryCode();
 
+  // If no name is stored, keep asking until a unique name is successfully reserved.
+  for (let attempt = 0; attempt < 8; attempt++) {
     if (!name) {
-      const entered = prompt(
-        'یک نام برای لیدربورد جهانی انتخاب کن (حداکثر ۲۰ نویسه):',
-        'بازیکن'
-      );
-      name = (entered === null ? 'بازیکن' : entered)
-        .trim().slice(0, 20) || 'بازیکن';
-
-      localStorage.setItem('gahremaniRunLeaderboardName', name);
+      const entered = prompt('یک نام کاربری یکتا برای لیدربورد انتخاب کن (۲ تا ۲۰ نویسه):', 'بازیکن');
+      if (entered === null) return null;
+      name = normalizeName(entered);
+    }
+    if (name.length < 2) {
+      alert('نام کاربری باید حداقل ۲ نویسه داشته باشد.');
+      name = '';
+      continue;
     }
 
-    const response = await fetch(
-      SUPABASE_URL + '/rest/v1/leaderboard',
-      {
-        method: 'POST',
-        headers: {
-          apikey: SUPABASE_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-          player_name: name,
-          score: Math.max(0, Math.min(100000000, Math.floor(score)))
-        })
-      }
-    );
+    const oldName = normalizeName(localStorage.getItem(PLAYER_NAME_KEY));
+    const result = await rpc('gahremani_claim_username', {
+      p_recovery_code: recoveryCode,
+      p_old_name: oldName,
+      p_new_name: name
+    });
 
+    if (result?.ok) {
+      localStorage.setItem(PLAYER_NAME_KEY, name);
+      return name;
+    }
+    if (result?.reason === 'taken') {
+      alert(`نام «${name}» قبلاً انتخاب شده است. لطفاً نام دیگری انتخاب کن.`);
+      name = '';
+      continue;
+    }
+    alert('این نام معتبر نیست؛ نامی بین ۲ تا ۲۰ نویسه انتخاب کن.');
+    name = '';
+  }
+  alert('ثبت نام انجام نشد. دوباره تلاش کن.');
+  return null;
+}
+
+async function submitGlobalScore(score) {
+  try {
+    const name = await getUniqueName();
+    if (!name) return;
+    const response = await fetch(SUPABASE_URL + '/rest/v1/leaderboard', {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        player_name: name,
+        score: Math.max(0, Math.min(100000000, Math.floor(score)))
+      })
+    });
     if (!response.ok) throw new Error('Could not submit score');
     await showGlobalScores();
   } catch (error) {
     console.warn('Score submission failed:', error);
+    alert('ثبت رکورد انجام نشد. اتصال اینترنت و اجرای اسکریپت جدید Supabase را بررسی کن.');
   }
 }
 
 if (gameover) {
   let wasVisible = !gameover.classList.contains('hidden');
-
   new MutationObserver(() => {
     const visible = !gameover.classList.contains('hidden');
-
     if (visible && !wasVisible) {
       showGlobalScores();
-
       let text = document.querySelector('#finalScore')?.textContent || '0';
       text = text.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
       text = text.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-
       const score = Number(text.replace(/\D/g, '')) || 0;
       submitGlobalScore(score);
     }
-
     wasVisible = visible;
   }).observe(gameover, { attributes: true, attributeFilter: ['class'] });
 }
