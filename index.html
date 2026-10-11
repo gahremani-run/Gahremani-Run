@@ -725,7 +725,7 @@ function burst(p,color){
  for(let i=0;i<8;i++){const s=new THREE.Mesh(burstGeometry,burstMaterial);s.position.copy(p);s.userData.v=new THREE.Vector3((Math.random()-.5)*.18,Math.random()*.2,(Math.random()-.5)*.18);s.userData.life=24;scene.add(s);particles.push(s)}
 }
 
-let running=false,paused=false,score=0,coinCount=0,worldSpeed=.4,spawn=0,coinSpawn=10,shake=0,last=performance.now();
+let running=false,paused=false,score=0,coinCount=0,worldSpeed=.36,spawn=0,coinSpawn=10,shake=0,last=performance.now();
 let lives=0, magnetTimer=0, multiplierTimer=0;
 const SHOP_KEY='cityRunnerShop_v1';
 const CLOUD_CODE_KEY='gahremaniCloudSave_v1';
@@ -966,7 +966,7 @@ function resetWorld(){
  [...obstacles,...coins,...trains,...hardObstacles,...powerups,...particles].forEach(x=>{scene.remove(x);});
  obstacles.length=coins.length=trains.length=hardObstacles.length=powerups.length=particles.length=0;
  player.position.set(0,0,3);lane=1;targetX=0;vy=0;onGround=true;sliding=false;
- score=0;coinCount=0;worldSpeed=.4+shopData.boost*.025;spawn=0;coinSpawn=12;tackling=false;tackleTimer=0;lives=0;magnetTimer=0;multiplierTimer=0;window.__powerupCd=240;
+ score=0;coinCount=0;worldSpeed=.36+shopData.boost*.025;spawn=0;coinSpawn=12;tackling=false;tackleTimer=0;lives=0;magnetTimer=0;multiplierTimer=0;window.__powerupCd=240;
   player.userData.shieldActive=false;tackleFrame=0;tackleFrameTimer=0;jumpFrame=0;jumpFrameTimer=0;currentView=-1;setCharacterView(4);characterMat.map=characterTextures[runFrame];characterMat.needsUpdate=true;
 }
 function startGame(){const boughtLife=(shopData.life||0)>0;shopData.life=0;saveShop();resetWorld();lives=boughtLife?1:0;updatePowerHud();renderShop();ensureAudio();running=true;paused=false;document.querySelector('#pauseOverlay').classList.add('hidden');document.querySelector('#pauseButton').classList.remove('hidden');menu.classList.add('hidden');gameover.classList.add('hidden');document.querySelector('#shop').classList.add('hidden');hud.classList.remove('hidden');controls.classList.remove('hidden');}
@@ -1035,7 +1035,7 @@ function animate(now){
  if(running&&!paused){
    score+=worldSpeed*dt*2;
    worldSpeed+=.00016*dt; // No maximum: speed keeps increasing throughout the run.
-   scoreEl.textContent=Math.floor(score); coinsEl.textContent=coinCount; speedEl.textContent=(worldSpeed/.4).toFixed(1);
+   scoreEl.textContent=Math.floor(score); coinsEl.textContent=coinCount; speedEl.textContent=(worldSpeed/.36).toFixed(1);
    player.position.x+=(targetX-player.position.x)*.18*dt;
    if(!onGround){vy-=.012*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}}
    const t=now*.012*worldSpeed/.34;
@@ -1063,7 +1063,7 @@ function animate(now){
    if(spawn<=0){
      const r=Math.random();
      if(r<.34)addTrain(-115); else if(r<.52)addBoxObstacle(-115); else if(r<.66)addHardTruck(-115); else if(r<.80)addHardWall(-115); else spawnCoinPattern(-105);
-     spawn=Math.max(14,48-worldSpeed*45)+Math.random()*10;
+     spawn=Math.max(17,52-worldSpeed*40)+Math.random()*12;
    }
    // Coin waves: no three-lane wall at the same depth; occasional diagonal trails encourage lane changes.
    coinSpawn-=dt;
