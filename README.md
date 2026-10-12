@@ -1,5 +1,5 @@
 ## Hi there 👋
-
+## If you see this text, it means that the game is being updated or corrupted.
 <!--
 **gahremani-run/Gahremani-Run** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
