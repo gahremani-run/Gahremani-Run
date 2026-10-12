@@ -52,6 +52,6 @@ async function submitGlobalScore(score) {
 }
 if (gameover) {
   let wasVisible=!gameover.classList.contains('hidden');
-  new MutationObserver(()=>{const visible=!gameover.classList.contains('hidden'); if(visible&&!wasVisible){showGlobalScores();let text=document.querySelector('#finalScore')?.textContent||'0';text=text.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));submitGlobalScore(Number(text.replace(/\D/g,''))||0);}wasVisible=visible;}).observe(gameover,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(()=>{const visible=!gameover.classList.contains('hidden'); if(visible&&!wasVisible){showGlobalScores();let scoreText=document.querySelector('#finalScore')?.textContent||'0';scoreText=scoreText.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));submitGlobalScore(Number(scoreText.replace(/\D/g,''))||0);}wasVisible=visible;}).observe(gameover,{attributes:true,attributeFilter:['class']});
 }
 showGlobalScores();
