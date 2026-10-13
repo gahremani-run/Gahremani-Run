@@ -226,7 +226,7 @@ button.artBtn:active{transform:scale(.97);filter:brightness(1.15)}
   </div>
 </div>
 <div id="gr-countdown" aria-live="assertive"><img id="gr-countdown-number" alt="شمارش معکوس"></div>
-<div id="gr-changelog" role="dialog" aria-modal="true"><div class="box"><h2>✨ تغییرات Gahremani Run — نسخه 1.3.1</h2><ul><li>🔒 ثبت رکورد و نام کاربری امن‌تر شد؛ رکوردها فقط از مسیر مجاز ثبت می‌شوند</li><li>🛡️ رفع باگ عبور از موانع و سکه‌ها در سرعت‌های بالا</li><li>⚡ سرعت بدون سقف، ولی با شتاب کمتر بعد از یک سرعت مشخص</li><li>⚖️ الگوهای موانع منصفانه‌تر: همیشه حداقل دو لاین قابل عبور</li><li>🚀 روان‌تر شدن بازی و مصرف حافظه کمتر روی گوشی</li><li>👆 سوایپ سریع‌تر و توقف خودکار هنگام خروج از بازی</li></ul><button id="closeChangelog">متوجه شدم</button></div></div>
+<div id="gr-changelog" role="dialog" aria-modal="true"><div class="box"><h2>✨ تغییرات Gahremani Run — نسخه 1.3.2</h2><ul><li>🚀 منحنی سرعت جدید: شتاب اصلی تا ۴×، بعد شتاب کمتر ولی بدون سقف</li><li>🚧 موانع بیشتر و بازی پرتحرک‌تر (همچنان همیشه حداقل دو لاین قابل عبور)</li><li>📋 امکان کپی کد بازیابی</li><li>🔒 ثبت رکورد و نام کاربری امن‌تر شد؛ رکوردها فقط از مسیر مجاز ثبت می‌شوند</li><li>🛡️ رفع باگ عبور از موانع و سکه‌ها در سرعت‌های بالا</li><li>⚡ سرعت بدون سقف، ولی با شتاب کمتر بعد از یک سرعت مشخص</li><li>⚖️ الگوهای موانع منصفانه‌تر: همیشه حداقل دو لاین قابل عبور</li><li>🚀 روان‌تر شدن بازی و مصرف حافظه کمتر روی گوشی</li><li>👆 سوایپ سریع‌تر و توقف خودکار هنگام خروج از بازی</li></ul><button id="closeChangelog">متوجه شدم</button></div></div>
 <div id="powerHud" class="hidden" style="position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:8;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-weight:900;text-shadow:0 2px 4px #000"></div>
 <div id="controls" class="hidden" aria-hidden="true"></div>
 <div id="flash"></div>
@@ -761,17 +761,17 @@ function addHardWall(z,laneIndex=null){
 let patternsSinceTriple=3, patternCount=0, lastPatternWeight=0;
 function spawnObstaclePattern(z){
   patternCount++;
-  const early=patternCount<=3;
-  const tripleChance=early?0:Math.min(.20,.05+Math.max(0,worldSpeed-.34)*.14);
-  const doubleChance=early?(patternCount===1?0:.2):.38;
+  const early=patternCount<=2;
+  const tripleChance=early?0:Math.min(.26,.07+Math.max(0,worldSpeed-.34)*.16);
+  const doubleChance=early?(patternCount===1?0:.3):.5;
   let count=1;
-  if(patternsSinceTriple>=3&&Math.random()<tripleChance) count=3;
+  if(patternsSinceTriple>=2&&Math.random()<tripleChance) count=3;
   else if(Math.random()<doubleChance) count=2;
   if(count===3) patternsSinceTriple=0; else patternsSinceTriple++;
   const chosen=[0,1,2];
   for(let i=2;i>0;i--){const j=Math.floor(Math.random()*(i+1));[chosen[i],chosen[j]]=[chosen[j],chosen[i]];}
   chosen.length=count;
-  const hardChance=count===1?.09:(count===2?.22:.20);
+  const hardChance=count===1?.12:(count===2?.25:.22);
   const hardLane=(worldSpeed>.45&&Math.random()<hardChance)?chosen[Math.floor(Math.random()*count)]:-1;
   chosen.forEach(lane=>{
     if(lane===hardLane){ if(Math.random()<.75) addHardTruck(z,lane); else addHardWall(z,lane); }
@@ -869,7 +869,7 @@ function burst(p,color){
 }
 
 let runMs=0; // active play time of the current run (pauses excluded), sent with the score
-const SPEED_SOFT_START=.9, SPEED_SOFT_DECAY=4; // acceleration is full up to this speed, then fades (no hard cap)
+const SPEED_PHASE2_AT=1.44, SPEED_PHASE2_ACCEL=.00005; // 4x = 1.44; after it acceleration drops to ~0.5x per minute (no cap)
 let running=false,paused=false,score=0,coinCount=0,worldSpeed=.34,spawn=0,coinSpawn=10,shake=0,last=performance.now();
 let lives=0, magnetTimer=0, multiplierTimer=0;
 const SHOP_KEY='cityRunnerShop_v1';
@@ -981,9 +981,40 @@ async function restoreCloudSave(){
     scheduleCloudSave(100);
   }catch(e){console.error(e);alert('بازیابی انجام نشد. اتصال اینترنت و تنظیمات ذخیره ابری Supabase را بررسی کن.');}
 }
+async function copyText(text){
+  try{ if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return true;} }catch(e){}
+  try{
+    const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');
+    ta.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(ta);
+    ta.select();ta.setSelectionRange(0,text.length);const ok=document.execCommand('copy');ta.remove();return ok;
+  }catch(e){return false;}
+}
+function showRecoveryDialog(code,title){
+  document.getElementById('gr-code-dialog')?.remove();
+  const d=document.createElement('div');d.id='gr-code-dialog';
+  d.style.cssText='position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:#020008ee;padding:20px;direction:rtl;font-family:system-ui,sans-serif;color:#fff';
+  d.innerHTML='<div style="width:min(92vw,430px);border:1px solid #c026d3;border-radius:20px;padding:22px;background:linear-gradient(150deg,#24113f,#080512);box-shadow:0 0 30px #a21caf66;text-align:center">'
+   +'<h2 style="color:#f0abfc;margin:0 0 12px;font-size:21px"></h2>'
+   +'<div style="font-size:14px;opacity:.85;margin-bottom:10px">کد بازیابی تو:</div>'
+   +'<div id="gr-code-text" dir="ltr" style="font-family:monospace;font-size:15px;word-break:break-all;user-select:all;-webkit-user-select:all;background:#000a;border:1px solid #8b5cf6;border-radius:12px;padding:12px;line-height:1.6"></div>'
+   +'<div style="font-size:13px;opacity:.75;margin:12px 0;line-height:1.7">این کد را جای امنی نگه دار. هرکس این کد را داشته باشد می‌تواند ذخیره این بازی را بازیابی کند.</div>'
+   +'<button id="gr-code-copy" style="width:100%;margin-top:4px;background:linear-gradient(90deg,#6d28d9,#db2777);color:#fff;border:1px solid #f0abfc;border-radius:12px;padding:13px;font-size:16px;font-weight:800">📋 کپی کد</button>'
+   +'<button id="gr-code-close" style="width:100%;margin-top:10px;background:#ffffff18;color:#fff;border:1px solid #ffffff44;border-radius:12px;padding:12px;font-size:15px;font-weight:700;box-shadow:none">بستن</button></div>';
+  document.body.appendChild(d);
+  d.querySelector('h2').textContent=title||'کد بازیابی';
+  d.querySelector('#gr-code-text').textContent=code;
+  const btn=d.querySelector('#gr-code-copy');
+  btn.addEventListener('click',async()=>{
+    const ok=await copyText(code);
+    if(ok){btn.textContent='✅ کپی شد';}
+    else{btn.textContent='کد را نگه دار و دستی کپی کن';const r=document.createRange();r.selectNodeContents(d.querySelector('#gr-code-text'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);}
+    setTimeout(()=>{btn.textContent='📋 کپی کد'},2500);
+  });
+  d.querySelector('#gr-code-close').addEventListener('click',()=>d.remove());
+}
 function showCloudRecoveryCode(){
   const code=localStorage.getItem(CLOUD_CODE_KEY);
-  if(code)alert(`کد بازیابی Gahremani Run:\n\n${code}\n\nاین کد را در جای امنی نگه دار. هرکس این کد را داشته باشد می‌تواند ذخیره این بازی را بازیابی کند.`);
+  if(code)showRecoveryDialog(code,'🔐 کد بازیابی Gahremani Run');
 }
 async function initializeCloudSave(){
   let code=localStorage.getItem(CLOUD_CODE_KEY);
@@ -1007,14 +1038,14 @@ async function initializeCloudSave(){
     cloudReady=true;
     scheduleCloudSave(300);
     if(newlyCreated){
-      alert(`ذخیره ابری بازی فعال شد!\n\nکد بازیابی تو:\n${code}\n\nاین کد ۳۲ حرفی را جایی امن ذخیره کن. اگر اطلاعات گوشی یا مرورگر پاک شود، فقط با این کد می‌توانی سکه‌ها و ارتقاها را بازیابی کنی. از بخش تنظیمات می‌توانی دوباره کد را ببینی.`);
+      showRecoveryDialog(code,'☁️ ذخیره ابری فعال شد!');
     }
   }catch(e){
     console.warn('Cloud initialization failed; local progress is preserved:',e);
     cloudReady=true;
     if(!localCloudTimestamp){localCloudTimestamp=Date.now();try{localStorage.setItem(CLOUD_TIME_KEY,String(localCloudTimestamp))}catch(_){} }
     if(navigator.onLine)scheduleCloudSave(1500);
-    if(newlyCreated)alert(`کد بازیابی بازی ساخته شد:\n${code}\n\nآن را ذخیره کن. ذخیره ابری تا زمان آماده شدن تنظیمات Supabase فعال نمی‌شود.`);
+    if(newlyCreated)showRecoveryDialog(code,'کد بازیابی ساخته شد');
   }
 }
 window.addEventListener('online',()=>scheduleCloudSave(300));
@@ -1189,7 +1220,7 @@ function animate(now){
  requestAnimationFrame(animate); const dt=Math.min((now-last)/16.67,2); last=now;
  if(running&&!paused){
    score+=worldSpeed*dt*2;runMs+=dt*16.67;
-   worldSpeed+=.00014*dt/(1+Math.max(0,worldSpeed-SPEED_SOFT_START)*SPEED_SOFT_DECAY);
+   worldSpeed+=dt*(worldSpeed<SPEED_PHASE2_AT?.00014:SPEED_PHASE2_ACCEL);
    scoreEl.textContent=Math.floor(score); coinsEl.textContent=coinCount; speedEl.textContent=(worldSpeed/.36).toFixed(1);
    player.position.x+=(targetX-player.position.x)*.18*dt;
    if(!onGround){vy-=.012*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}}
@@ -1217,11 +1248,11 @@ function animate(now){
    spawn-=dt;
     if(spawn<=0){
       // Spawn farther away as speed grows, so the player keeps a similar reaction time.
-      const spawnZ=-115-Math.min(120,Math.max(0,worldSpeed-.5)*75);
-      if(Math.random()<.8||patternCount<2){ spawnObstaclePattern(spawnZ); spawnDomeOverPattern(spawnZ); }
+      const spawnZ=-115-Math.min(215,Math.max(0,worldSpeed-.5)*75);
+      if(Math.random()<.9||patternCount<2){ spawnObstaclePattern(spawnZ); spawnDomeOverPattern(spawnZ); }
       else { lastPatternWeight=-1; spawnCoinPattern(-105); }
       // Reaction window grows after dense or hard patterns.
-      spawn=Math.max(26,Math.max(34,66-worldSpeed*32)+Math.random()*14+lastPatternWeight*9);
+      spawn=Math.max(22,Math.max(28,52-worldSpeed*25)+Math.random()*10+lastPatternWeight*7);
     }
    // Coin waves: no three-lane wall at the same depth; occasional diagonal trails encourage lane changes.
    coinSpawn-=dt;
@@ -1281,7 +1312,7 @@ function animate(now){
 const menu=document.querySelector('#menu'),gameover=document.querySelector('#gameover'),hud=document.querySelector('#hud'),controls=document.querySelector('#controls'),scoreEl=document.querySelector('#score'),coinsEl=document.querySelector('#coins'),speedEl=document.querySelector('#speed'),finalScore=document.querySelector('#finalScore'),flash=document.querySelector('#flash'),start=document.querySelector('#start'),restart=document.querySelector('#restart');
 renderHighScores();renderShop();
 document.querySelector('#changeUsername')?.addEventListener('click',changePlayerName);
-const GR_CHANGELOG_VERSION='1.3.1';const grChangelog=document.querySelector('#gr-changelog');
+const GR_CHANGELOG_VERSION='1.3.2';const grChangelog=document.querySelector('#gr-changelog');
 function showChangelog(){if(grChangelog)grChangelog.style.display='flex';}
 function closeChangelog(){if(grChangelog)grChangelog.style.display='none';try{localStorage.setItem('gahremaniRunSeenChangelog',GR_CHANGELOG_VERSION)}catch(e){}}
 document.querySelector('#showChangelog')?.addEventListener('click',showChangelog);document.querySelector('#closeChangelog')?.addEventListener('click',closeChangelog);
@@ -1312,7 +1343,7 @@ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updat
 <button id="gr-install-chip" type="button">نصب بازی روی گوشی</button>
 <script>
 (()=>{
-  const APP_VERSION='1.3.1';
+  const APP_VERSION='1.3.2';
   const VERSION_URL='./version.json';
   const shade=document.getElementById('gr-update-shade');
   const summary=document.getElementById('gr-update-summary');

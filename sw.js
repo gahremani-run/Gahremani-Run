@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gahremani-run-shell-v1.3.1';
+const CACHE_NAME = 'gahremani-run-shell-v1.3.2';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './assets/icon-192.png', './assets/icon-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
