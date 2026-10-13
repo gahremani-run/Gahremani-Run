@@ -46,9 +46,13 @@ async function getUniqueName() {
 async function submitGlobalScore(score) {
   try {
     const name=await getUniqueName(); if (!name) return;
-    const response=await fetch(SUPABASE_URL+'/rest/v1/leaderboard',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({player_name:name,score:Math.max(0,Math.min(100000000,Math.floor(score)))})});
-    if (!response.ok) throw new Error('Could not submit score'); await showGlobalScores();
-  } catch(error) { console.warn('Score submission failed:',error); alert('ثبت رکورد انجام نشد. اتصال اینترنت و اجرای اسکریپت جدید Supabase را بررسی کن.'); }
+    const seconds=Math.max(1,Math.min(1800,Math.round(Number(window.grLastRunSeconds)||0)));
+    const result=await rpc('gahremani_submit_score',{p_recovery_code:getOrCreateRecoveryCode(),p_score:Math.max(0,Math.min(100000000,Math.floor(score))),p_seconds:seconds});
+    if (result?.ok) { await showGlobalScores(); return; }
+    if (result?.reason==='rate_limited') return;
+    console.warn('Score rejected:',result);
+    alert('رکورد این دور ثبت نشد.');
+  } catch(error) { console.warn('Score submission failed:',error); alert('ثبت رکورد انجام نشد. اتصال اینترنت و اجرای اسکریپت‌های جدید Supabase را بررسی کن.'); }
 }
 if (gameover) {
   let wasVisible=!gameover.classList.contains('hidden');
