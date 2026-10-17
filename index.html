@@ -280,7 +280,7 @@ html,body{overscroll-behavior:none}body.playing{touch-action:none}
   </div>
 </div>
 <div id="gr-countdown" aria-live="assertive"><img id="gr-countdown-number" alt="شمارش معکوس"></div>
-<div id="gr-changelog" role="dialog" aria-modal="true"><div class="box"><h2>✨ تغییرات Gahremani Run — نسخه 2.0.0</h2><ul><li>🧬 ۲۱ کاراکتر و اسکین ۳بعدی با ۶ درجه کمیابی؛ باز کردن با سکه، الماس یا ماموریت</li><li>🏠 منوی اصلی جدید با نمایش کاراکتر انتخاب‌شده و انیمیشن‌های تصادفی</li><li>🏆 لیدربورد هفتگی و فصلی با جایزه‌ی الماس، قوانین، تایمر و پروفایل بازیکنان</li><li>👤 صفحه‌ی حساب کاربری با سابقه‌ی فصل‌ها و هفته‌ها</li><li>💎 واحد جدید الماس + ذخیره‌ی ابری اسکین‌ها، الماس و ماموریت‌ها</li><li>🎬 انیمیشن‌های اختصاصی برای هر گروه کاراکتر (پرش، دویدن، مرگ تصادفی، اسلاید و رول)</li><li>⚡ بارگذاری سریع‌تر: مدل‌ها در پوشه‌ی assets کش می‌شوند و بازی آفلاین هم اجرا می‌شود</li><li>👆 کنترل لمسی بهتر و امکان پرش از حالت رول و اسلاید</li></ul><button id="closeChangelog">متوجه شدم</button></div></div>
+<div id="gr-changelog" role="dialog" aria-modal="true"><div class="box"><h2>✨ تغییرات Gahremani Run — نسخه 2.0.1</h2><ul><li>🛠️ رفع باگ خرید شخصیت‌های جدید (ایرج و معبودی)</li><li>👆 سوایپ دقیق‌تر: هر کشیدن انگشت فقط یک لاین عوض می‌کند و پرش بعد از تغییر لاین و رول فوری کار می‌کند</li><li>🧬 ۲۱ کاراکتر و اسکین ۳بعدی با ۶ درجه کمیابی؛ باز کردن با سکه، الماس یا ماموریت</li><li>🏠 منوی اصلی جدید با نمایش کاراکتر انتخاب‌شده و انیمیشن‌های تصادفی</li><li>🏆 لیدربورد هفتگی و فصلی با جایزه‌ی الماس، قوانین، تایمر و پروفایل بازیکنان</li><li>👤 صفحه‌ی حساب کاربری با سابقه‌ی فصل‌ها و هفته‌ها</li><li>💎 واحد جدید الماس + ذخیره‌ی ابری اسکین‌ها، الماس و ماموریت‌ها</li><li>🎬 انیمیشن‌های اختصاصی برای هر گروه کاراکتر (پرش، دویدن، مرگ تصادفی، اسلاید و رول)</li><li>⚡ بارگذاری سریع‌تر: مدل‌ها در پوشه‌ی assets کش می‌شوند و بازی آفلاین هم اجرا می‌شود</li><li>👆 کنترل لمسی بهتر و امکان پرش از حالت رول و اسلاید</li></ul><button id="closeChangelog">متوجه شدم</button></div></div>
 <div id="powerHud" class="hidden" style="position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:8;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-weight:900;text-shadow:0 2px 4px #000"></div>
 <div id="controls" class="hidden" aria-hidden="true"></div>
 <div id="flash"></div>
@@ -1433,19 +1433,22 @@ addEventListener('keydown',e=>{
 document.querySelectorAll('.ctrl').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();action(b.dataset.a)})});
 document.querySelector('#start').onclick=startGame; document.querySelector('#restart').onclick=startGame; document.querySelector('#openShopMenu').onclick=openShop; document.querySelector('#openShop').onclick=openShop; document.querySelector('#closeShop').onclick=closeShop; document.querySelector('#toggleSound').onclick=toggleSound; document.querySelector('#toggleSoundLegacy').onclick=toggleSound; document.querySelector('#openSettings').onclick=()=>{renderSoundButton();document.querySelector('#settings').classList.remove('hidden')}; document.querySelector('#openSettingsMenu').onclick=()=>{renderSoundButton();document.querySelector('#settings').classList.remove('hidden')}; document.querySelector('#closeSettings').onclick=()=>document.querySelector('#settings').classList.add('hidden'); const resetAllData=()=>{if(confirm('همه رکوردها و داده‌های شاپ پاک شوند؟')){localStorage.removeItem(SCORE_KEY);localStorage.removeItem('cityRunnerShop_v1');location.reload()}}; document.querySelector('#resetData').onclick=resetAllData; document.querySelector('#resetDataLegacy').onclick=resetAllData; document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyItem(b.dataset.buy));
 
-let touchX=0,touchY=0,swiped=false;
-addEventListener('touchstart',e=>{touchX=e.touches[0].clientX;touchY=e.touches[0].clientY;swiped=false},{passive:true});
-function doSwipe(dx,dy){if(Math.abs(dx)>Math.abs(dy))action(dx>0?'right':'left'); else action(dy<0?'jump':'slide');}
-addEventListener('touchmove',e=>{ // chained swipes: after an action the origin moves to the finger, so "left then down" works in one gesture
-  const t=e.touches[0],dx=t.clientX-touchX,dy=t.clientY-touchY;
-  if(Math.max(Math.abs(dx),Math.abs(dy))<18)return;
-  swiped=true;doSwipe(dx,dy);touchX=t.clientX;touchY=t.clientY;
+let touchX=0,touchY=0,swiped=false,lastDir='';
+addEventListener('touchstart',e=>{touchX=e.touches[0].clientX;touchY=e.touches[0].clientY;swiped=false;lastDir='';},{passive:true});
+function dirOf(dx,dy){return Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy<0?'jump':'slide');}
+// Chained gestures ("left then up" in one touch) are allowed only for a DIFFERENT direction; repeating the same direction needs a new swipe.
+addEventListener('touchmove',e=>{
+  const t=e.touches[0],dx=t.clientX-touchX,dy=t.clientY-touchY,dist=Math.max(Math.abs(dx),Math.abs(dy));
+  if(dist<26)return;
+  const d=dirOf(dx,dy);
+  if(lastDir){if(d===lastDir)return;if(dist<32)return;}
+  swiped=true;lastDir=d;action(d);touchX=t.clientX;touchY=t.clientY;
 },{passive:true});
 addEventListener('touchend',e=>{
   if(swiped)return;
   const dx=e.changedTouches[0].clientX-touchX,dy=e.changedTouches[0].clientY-touchY;
-  if(Math.max(Math.abs(dx),Math.abs(dy))<30)return;
-  doSwipe(dx,dy);
+  if(Math.max(Math.abs(dx),Math.abs(dy))<26)return;
+  action(dirOf(dx,dy));
 },{passive:true});
 
 // ===== Shop navigation + character screen (neon UI) =====
@@ -1464,7 +1467,7 @@ function openCharacters(){
   browse.mode='chars';browse.ci=Math.max(0,CHARACTERS.findIndex(c=>c.id===SKINS[shopData.equip].ch));browse.si=0;
   refreshCharUI();startPreview();
 }
-function canBuyChar(id){return charOwned(SKINS[id].ch)||SKINS[id].price.free;}
+function canBuyChar(id){const ch=CHARACTERS.find(c=>c.id===SKINS[id].ch);return charOwned(ch.id)||!!SKINS[id].price.free||ch.skins[0]===id;}
 function refreshCharUI(){
   const c=curChar(),sm=browse.mode==='skins',id=previewSkinId(),sk=SKINS[id],own=owned(id),eq=shopData.equip===id;
   const total=sm?c.skins.length:CHARACTERS.length,idx=sm?browse.si:browse.ci;
@@ -1477,8 +1480,8 @@ function refreshCharUI(){
   tag.textContent=(sm?eq:SKINS[shopData.equip].ch===c.id)?'✓ انتخاب‌شده':(shownOwn?'✓ دارید':'🔒 قفل');
   const act=$id('charAct'),info=$id('charInfo');let h='',i2='';
   const buyBtns=(sid)=>{const p=SKINS[sid].price;let b='';
-    if(p.coin)b+=`<button class="nbtn pbuy" data-buy="${sid}" data-cur="coin"${shopData.wallet>=p.coin?'':' disabled'}>🪙 ${fa(p.coin)}</button>`;
-    if(p.gem)b+=`<button class="nbtn pbuy" data-buy="${sid}" data-cur="gem"${(shopData.diamonds||0)>=p.gem?'':' disabled'}>💎 ${fa(p.gem)}</button>`;
+    if(p.coin)b+=`<button class="nbtn pbuy" data-skin="${sid}" data-cur="coin"${shopData.wallet>=p.coin?'':' disabled'}>🪙 ${fa(p.coin)}</button>`;
+    if(p.gem)b+=`<button class="nbtn pbuy" data-skin="${sid}" data-cur="gem"${(shopData.diamonds||0)>=p.gem?'':' disabled'}>💎 ${fa(p.gem)}</button>`;
     return b;};
   if(!sm){ // character level
     if(!lockedChar){const isEq=SKINS[shopData.equip].ch===c.id;h=`<button id="charSelect" class="nbtn primary"${isEq?' disabled':''}>${isEq?'✓ انتخاب شده':'انتخاب'}</button>`;}
@@ -1541,7 +1544,7 @@ $id('charNext').onclick=()=>stepChar(1);$id('charPrev').onclick=()=>stepChar(-1)
 $id('charSkinToggle').onclick=()=>{browse.mode=browse.mode==='skins'?'chars':'skins';browse.si=Math.max(0,curChar().skins.indexOf(SKINS[shopData.equip].ch===curChar().id?shopData.equip:''));refreshCharUI();};
 $id('charAct').onclick=e=>{
   const b=e.target.closest('button');if(!b||b.disabled)return;
-  if(b.dataset.buy){buySkin(b.dataset.buy,b.dataset.cur);return;}
+  if(b.dataset.skin){buySkin(b.dataset.skin,b.dataset.cur);return;}
   if(b.id==='charSelect'){const id=previewSkinId();if(!owned(id))return;shopData.equip=id;saveShop();applyEquip();refreshCharUI();}
 };
 addEventListener('resize',()=>{if(prevActive)resizePreview();});
@@ -1807,7 +1810,7 @@ function animate(now){
 const menu=document.querySelector('#menu'),gameover=document.querySelector('#gameover'),hud=document.querySelector('#hud'),controls=document.querySelector('#controls'),scoreEl=document.querySelector('#score'),coinsEl=document.querySelector('#coins'),speedEl=document.querySelector('#speed'),finalScore=document.querySelector('#finalScore'),flash=document.querySelector('#flash'),start=document.querySelector('#start'),restart=document.querySelector('#restart');
 renderHighScores();renderShop();
 document.querySelector('#changeUsername')?.addEventListener('click',()=>changePlayerName());
-const GR_CHANGELOG_VERSION='2.0.0';const grChangelog=document.querySelector('#gr-changelog');
+const GR_CHANGELOG_VERSION='2.0.1';const grChangelog=document.querySelector('#gr-changelog');
 function showChangelog(){if(grChangelog)grChangelog.style.display='flex';}
 function closeChangelog(){if(grChangelog)grChangelog.style.display='none';try{localStorage.setItem('gahremaniRunSeenChangelog',GR_CHANGELOG_VERSION)}catch(e){}}
 document.querySelector('#showChangelog')?.addEventListener('click',showChangelog);document.querySelector('#closeChangelog')?.addEventListener('click',closeChangelog);
@@ -1840,7 +1843,7 @@ boot();
 <button id="gr-install-chip" type="button">نصب بازی روی گوشی</button>
 <script>
 (()=>{
-  const APP_VERSION='2.0.0';
+  const APP_VERSION='2.0.1';
   const VERSION_URL='./version.json';
   const shade=document.getElementById('gr-update-shade');
   const summary=document.getElementById('gr-update-summary');
