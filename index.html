@@ -49,8 +49,8 @@ button{border:0;border-radius:16px;padding:14px 34px;font-size:18px;font-weight:
 <style>
 #gr-countdown{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;background:#05000bb8;backdrop-filter:blur(3px)}
 #gr-countdown img{width:min(48vw,260px);height:min(48vw,260px);object-fit:contain;filter:drop-shadow(0 0 18px #e000ff)}
-#gr-changelog{position:fixed;inset:0;z-index:1001;display:none;align-items:center;justify-content:center;background:#020008eF;padding:20px;color:#fff;font-family:system-ui,sans-serif;direction:rtl}
-#gr-changelog .box{width:min(92vw,430px);border:1px solid #c026d3;border-radius:20px;padding:22px;background:linear-gradient(150deg,#24113f,#080512);box-shadow:0 0 30px #a21caf66}
+#gr-changelog{position:fixed;inset:0;z-index:1001;display:none;align-items:flex-start;justify-content:center;background:#020008eF;padding:20px;color:#fff;font-family:system-ui,sans-serif;direction:rtl;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#gr-changelog .box{width:min(92vw,430px);max-height:none;margin:auto 0;border:1px solid #c026d3;border-radius:20px;padding:22px;background:linear-gradient(150deg,#24113f,#080512);box-shadow:0 0 30px #a21caf66}
 #gr-changelog h2{color:#f0abfc;margin:0 0 12px}#gr-changelog li{margin:8px 0;line-height:1.6}#gr-changelog button{width:100%;margin-top:12px;background:linear-gradient(90deg,#6d28d9,#db2777);color:white;border:1px solid #f0abfc;border-radius:12px;padding:11px;font-weight:900}
 </style>
 <style>
@@ -280,7 +280,7 @@ html,body{overscroll-behavior:none}body.playing{touch-action:none}
   </div>
 </div>
 <div id="gr-countdown" aria-live="assertive"><img id="gr-countdown-number" alt="شمارش معکوس"></div>
-<div id="gr-changelog" role="dialog" aria-modal="true"><div class="box"><h2>✨ تغییرات Gahremani Run — نسخه 2.0.2</h2><ul><li>🦘 پرش کوتاه‌تر و دقیق‌تر با همان ارتفاع قبلی</li><li>🎥 دوربین حین پرش بالا می‌آید</li><li>🪙 سکه‌های گنبدی کوتاه‌تر و نیمه‌شفاف شدند</li><li>🎭 انیمیشن‌های کوتاه منو (سرتکان‌دادن، لرزیدن، شنا، مدیتیشن) با سرعت عادی چند بار تکرار می‌شوند تا ۵ ثانیه</li><li>🛠️ رفع باگ خرید شخصیت‌های جدید (ایرج و معبودی)</li><li>👆 سوایپ دقیق‌تر: هر کشیدن انگشت فقط یک لاین عوض می‌کند و پرش بعد از تغییر لاین و رول فوری کار می‌کند</li><li>🧬 ۲۱ کاراکتر و اسکین ۳بعدی با ۶ درجه کمیابی؛ باز کردن با سکه، الماس یا ماموریت</li><li>🏠 منوی اصلی جدید با نمایش کاراکتر انتخاب‌شده و انیمیشن‌های تصادفی</li><li>🏆 لیدربورد هفتگی و فصلی با جایزه‌ی الماس، قوانین، تایمر و پروفایل بازیکنان</li><li>👤 صفحه‌ی حساب کاربری با سابقه‌ی فصل‌ها و هفته‌ها</li><li>💎 واحد جدید الماس + ذخیره‌ی ابری اسکین‌ها، الماس و ماموریت‌ها</li><li>🎬 انیمیشن‌های اختصاصی برای هر گروه کاراکتر (پرش، دویدن، مرگ تصادفی، اسلاید و رول)</li><li>⚡ بارگذاری سریع‌تر: مدل‌ها در پوشه‌ی assets کش می‌شوند و بازی آفلاین هم اجرا می‌شود</li><li>👆 کنترل لمسی بهتر و امکان پرش از حالت رول و اسلاید</li></ul><button id="closeChangelog">متوجه شدم</button></div></div>
+<div id="gr-changelog" role="dialog" aria-modal="true"><div class="box"><h2>✨ تغییرات Gahremani Run — نسخه 2.0.3</h2><ul><li>🎥 دوربین حین پرش بیشتر بالا می‌آید تا دید جلو باز بماند</li><li>📜 منوی تغییرات نسخه حالا روی گوشی اسکرول می‌خورد</li><li>💎 جوایز لیدربورد هفتگی تغییر کرد: رتبه ۱: ۱۲۰ 💎، رتبه ۲: ۹۰ 💎، رتبه ۳: ۶۰ 💎</li><li>🦘 پرش کوتاه‌تر و دقیق‌تر با همان ارتفاع قبلی</li><li>🎥 دوربین حین پرش بالا می‌آید</li><li>🪙 سکه‌های گنبدی کوتاه‌تر و نیمه‌شفاف شدند</li><li>🎭 انیمیشن‌های کوتاه منو (سرتکان‌دادن، لرزیدن، شنا، مدیتیشن) با سرعت عادی چند بار تکرار می‌شوند تا ۵ ثانیه</li><li>🛠️ رفع باگ خرید شخصیت‌های جدید (ایرج و معبودی)</li><li>👆 سوایپ دقیق‌تر: هر کشیدن انگشت فقط یک لاین عوض می‌کند و پرش بعد از تغییر لاین و رول فوری کار می‌کند</li><li>🧬 ۲۱ کاراکتر و اسکین ۳بعدی با ۶ درجه کمیابی؛ باز کردن با سکه، الماس یا ماموریت</li><li>🏠 منوی اصلی جدید با نمایش کاراکتر انتخاب‌شده و انیمیشن‌های تصادفی</li><li>🏆 لیدربورد هفتگی و فصلی با جایزه‌ی الماس، قوانین، تایمر و پروفایل بازیکنان</li><li>👤 صفحه‌ی حساب کاربری با سابقه‌ی فصل‌ها و هفته‌ها</li><li>💎 واحد جدید الماس + ذخیره‌ی ابری اسکین‌ها، الماس و ماموریت‌ها</li><li>🎬 انیمیشن‌های اختصاصی برای هر گروه کاراکتر (پرش، دویدن، مرگ تصادفی، اسلاید و رول)</li><li>⚡ بارگذاری سریع‌تر: مدل‌ها در پوشه‌ی assets کش می‌شوند و بازی آفلاین هم اجرا می‌شود</li><li>👆 کنترل لمسی بهتر و امکان پرش از حالت رول و اسلاید</li></ul><button id="closeChangelog">متوجه شدم</button></div></div>
 <div id="powerHud" class="hidden" style="position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:8;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-weight:900;text-shadow:0 2px 4px #000"></div>
 <div id="controls" class="hidden" aria-hidden="true"></div>
 <div id="flash"></div>
@@ -1613,7 +1613,7 @@ setInterval(()=>{
 async function openBoard(){$id('board').classList.remove('hidden');ONL.open=true;setTab(ONL.tab);await syncInfo();loadBoard();claimPrizesFlow();}
 function closeBoard(){$id('board').classList.add('hidden');ONL.open=false;}
 function setTab(t){ONL.tab=t;$id('tabWeek').classList.toggle('on',t==='week');$id('tabSeason').classList.toggle('on',t==='season');
-  $id('boardPrize').innerHTML=t==='week'?'🎁 جوایز هفتگی: رتبه ۱: ۱۰۰ 💎 · رتبه ۲: ۸۰ 💎 · رتبه ۳: ۶۰ 💎 · رتبه ۴ تا ۱۰: ۳۰ 💎':'🏅 جایزه فصلی: رتبه ۱ تا ۳ اسکین ویژه می‌گیرند (در آپدیت‌های بعدی مشخص می‌شود)';
+  $id('boardPrize').innerHTML=t==='week'?'🎁 جوایز هفتگی: رتبه ۱: ۱۲۰ 💎 · رتبه ۲: ۹۰ 💎 · رتبه ۳: ۶۰ 💎 · رتبه ۴ تا ۱۰: ۳۰ 💎':'🏅 جایزه فصلی: رتبه ۱ تا ۳ اسکین ویژه می‌گیرند (در آپدیت‌های بعدی مشخص می‌شود)';
   if(ONL.info){const end=t==='season'?ONL.info.season_end:ONL.info.week_end;$id('boardTimer').textContent=leftText(end-(Date.now()+ONL.off));}}
 async function loadBoard(){
   const list=$id('boardList'),me=$id('boardMe');list.innerHTML='<li class="empty">در حال بارگذاری…</li>';me.textContent='';
@@ -1632,7 +1632,7 @@ function showRules(){modal(`<h3>📜 قوانین لیدربورد</h3><div clas
 <p><b>لیدربورد فصلی:</b> هر فصل ۴ هفته است. امتیاز فصلی = مجموع «میانگین سه امتیاز برتر هر هفته» در ۴ هفته‌ی آن فصل. بعد از پایان فصل، لیدربورد فصلی ریست می‌شود.</p>
 <p><b>کمتر از ۳ دور در هفته:</b> اگر بازیکن در یک هفته کمتر از ۳ بار بازی کند، همچنان میانگین ۳ امتیاز گرفته می‌شود و امتیازهای کم‌شده صفر حساب می‌شوند. مثلاً با ۲ دور بازی، دور سوم صفر است.</p>
 <p><b>تساوی:</b> در لیدربورد فصلی اگر امتیاز دو بازیکن برابر شود، کسی که در آن فصل بیشترین میانگین امتیاز هفتگی را داشته بالاتر قرار می‌گیرد. در لیدربورد هفتگی اگر رکوردها برابر باشد، کسی که زودتر به آن رسیده بالاتر است.</p>
-<p><b>جوایز هفتگی:</b> رتبه ۱: ۱۰۰ الماس · رتبه ۲: ۸۰ الماس · رتبه ۳: ۶۰ الماس · رتبه ۴ تا ۱۰: ۳۰ الماس.</p>
+<p><b>جوایز هفتگی:</b> رتبه ۱: ۱۲۰ الماس · رتبه ۲: ۹۰ الماس · رتبه ۳: ۶۰ الماس · رتبه ۴ تا ۱۰: ۳۰ الماس.</p>
 <p><b>جایزه‌ی فصلی:</b> رتبه‌ی ۱ تا ۳ هر فصل یک اسکین ویژه می‌گیرند (جزئیات در آپدیت‌های بعدی اعلام می‌شود).</p>
 <p><b>دریافت جایزه:</b> جایزه‌ی هفتگی اولین باری که بعد از پایان هفته آنلاین شوید خودکار داده می‌شود و با یک اعلان نمایش داده می‌شود. این جایزه فقط در هفته‌ی بعد از پایان لیدربورد قابل دریافت است؛ اگر تا پایان آن هفته آنلاین نشوید جایزه سوخت می‌شود.</p>
 </div><button class="nbtn primary" id="rulesOk">متوجه شدم</button>`,'tall');$id('rulesOk').onclick=closeModal;}
@@ -1745,8 +1745,8 @@ function animate(now){
 
    // Keep the runner safely inside the camera frame on every lane.
    camera.position.z+=(9-camera.position.z)*.05*dt;camera.position.x+=(player.position.x*.035-camera.position.x)*.018*dt;
-   camera.position.y+=(4.35+player.position.y*.42-camera.position.y)*.07*dt;
-   camLook.lerp(_tmpLook.set(player.position.x*.10,1.35+player.position.y*.30,-20),Math.min(1,.07*dt));camera.lookAt(camLook);
+   camera.position.y+=(4.35+player.position.y*.95-camera.position.y)*.09*dt;
+   camLook.lerp(_tmpLook.set(player.position.x*.10,1.35+player.position.y*.55,-20),Math.min(1,.07*dt));camera.lookAt(camLook);
    spawn-=dt;
     if(spawn<=0){
       // Spawn farther away as speed grows, so the player keeps a similar reaction time.
@@ -1815,7 +1815,7 @@ function animate(now){
 const menu=document.querySelector('#menu'),gameover=document.querySelector('#gameover'),hud=document.querySelector('#hud'),controls=document.querySelector('#controls'),scoreEl=document.querySelector('#score'),coinsEl=document.querySelector('#coins'),speedEl=document.querySelector('#speed'),finalScore=document.querySelector('#finalScore'),flash=document.querySelector('#flash'),start=document.querySelector('#start'),restart=document.querySelector('#restart');
 renderHighScores();renderShop();
 document.querySelector('#changeUsername')?.addEventListener('click',()=>changePlayerName());
-const GR_CHANGELOG_VERSION='2.0.2';const grChangelog=document.querySelector('#gr-changelog');
+const GR_CHANGELOG_VERSION='2.0.3';const grChangelog=document.querySelector('#gr-changelog');
 function showChangelog(){if(grChangelog)grChangelog.style.display='flex';}
 function closeChangelog(){if(grChangelog)grChangelog.style.display='none';try{localStorage.setItem('gahremaniRunSeenChangelog',GR_CHANGELOG_VERSION)}catch(e){}}
 document.querySelector('#showChangelog')?.addEventListener('click',showChangelog);document.querySelector('#closeChangelog')?.addEventListener('click',closeChangelog);
@@ -1848,7 +1848,7 @@ boot();
 <button id="gr-install-chip" type="button">نصب بازی روی گوشی</button>
 <script>
 (()=>{
-  const APP_VERSION='2.0.2';
+  const APP_VERSION='2.0.3';
   const VERSION_URL='./version.json';
   const shade=document.getElementById('gr-update-shade');
   const summary=document.getElementById('gr-update-summary');
