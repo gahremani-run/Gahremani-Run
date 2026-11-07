@@ -1,0 +1,228 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gahremani Run — پنل مدیریت</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--pink:#ff2bd6;--cyan:#27e8ff;--violet:#8b5cf6;--bg:#0b0224}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(120% 70% at 50% 0%,#33106b,#0b0224 48%,#03000a);color:#fff;font-family:system-ui,sans-serif;padding:16px}
+h1{font-size:19px;text-shadow:0 0 10px var(--pink)}
+.card{background:#120828;border:1px solid #3a2a6a;border-radius:14px;padding:14px;margin-bottom:14px}
+input,button,select{font:inherit;border-radius:10px;border:1.5px solid var(--cyan);background:#0a0626;color:#fff;padding:9px 12px}
+button{cursor:pointer;background:linear-gradient(90deg,var(--pink),var(--violet));border:0;font-weight:800}
+button.ghost{background:#0a0626;border:1.5px solid #8b5cf6aa}
+button.danger{background:#5a0f1c;border:1.5px solid #ff4d6d}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 8px;border-bottom:1px solid #ffffff14;text-align:right}
+tr.flagged{background:#3a1a0a55}tr.blocked{background:#4a0a1655;opacity:.7}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800}
+.pill.ok{background:#0d3b2e;color:#6dffb2}.pill.bad{background:#4a0a16;color:#ff8da1}
+#hidden{display:none}
+</style></head>
+<body>
+<div id="login" class="card" style="max-width:360px;margin:60px auto">
+  <h1>🔐 ورود مدیر</h1>
+  <div class="row" style="flex-direction:column;align-items:stretch">
+    <input id="lu" placeholder="نام کاربری">
+    <input id="lp" type="password" placeholder="رمز عبور">
+    <button id="loginBtn">ورود</button>
+    <div id="loginErr" style="color:#ff8da1;font-size:13px"></div>
+  </div>
+</div>
+
+<div id="panel" style="display:none">
+  <h1>🛡️ پنل مدیریت Gahremani Run <button class="ghost" id="logoutBtn" style="float:left">خروج</button></h1>
+
+  <div class="card">
+    <div class="row">
+      <input id="search" placeholder="جستجوی نام کاربری">
+      <button id="searchBtn">جستجو</button>
+      <button class="ghost" id="refreshBtn">تازه‌سازی</button>
+      <span style="flex:1"></span>
+      <button class="ghost" id="suspectsBtn">🚩 موارد مشکوک</button>
+    </div>
+  </div>
+
+  <div class="card" id="suspectsCard" style="display:none">
+    <h3>🚩 موارد مشکوک (بررسی‌نشده)</h3>
+    <div id="suspectsList"></div>
+  </div>
+
+  <div class="card">
+    <h3>بازیکنان</h3>
+    <table><thead><tr><th>نام</th><th>سکه</th><th>الماس</th><th>اسکین‌ها</th><th>وضعیت</th><th>آخرین فعالیت</th><th></th></tr></thead>
+    <tbody id="playerRows"></tbody></table>
+  </div>
+
+  <div class="card" id="detailCard" style="display:none">
+    <div class="row"><h3 id="detailName" style="flex:1"></h3><button class="ghost" id="closeDetail">بستن</button></div>
+    <div class="row">
+      <button id="flagBtn" class="ghost">🚩 علامت‌گذاری</button>
+      <button id="blockBtn" class="danger">⛔ مسدود کردن</button>
+      <button id="unblockBtn" class="ghost">✅ رفع مسدودی</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <select id="adjCur"><option value="wallet">سکه</option><option value="diamonds">الماس</option></select>
+      <input id="adjAmt" type="number" placeholder="مقدار (+/-)" style="width:120px">
+      <input id="adjReason" placeholder="دلیل (الزامی)" style="flex:1;min-width:160px">
+      <button id="adjBtn">اعمال اصلاح</button>
+    </div>
+    <h4>تراکنش‌ها</h4><div id="txList" style="max-height:220px;overflow-y:auto;font-size:12px"></div>
+    <h4>موارد مشکوک این بازیکن</h4><div id="suspectDetail" style="font-size:12px"></div>
+    <h4>دستگاه‌های مشترک (احتمالی)</h4><div id="deviceList" style="font-size:12px"></div>
+
+    <h4>🏆 رکوردهای این بازیکن</h4>
+    <table><thead><tr><th>هفته</th><th>امتیاز ۱</th><th>امتیاز ۲</th><th>امتیاز ۳</th><th>رتبه نهایی</th><th></th></tr></thead>
+    <tbody id="recordRows"></tbody></table>
+
+    <h4>🧬 اسکین‌های این بازیکن</h4>
+    <div id="skinChecklist" class="row" style="flex-wrap:wrap;gap:6px"></div>
+    <button id="saveSkinsBtn" class="ghost" style="margin-top:8px">ذخیره تغییرات اسکین</button>
+
+    <h4>🔐 ورود (ایمیل داخلی / رمز عبور)</h4>
+    <div id="emailLine" style="margin-bottom:6px"></div>
+    <div class="row">
+      <input id="newEmail" placeholder="ایمیل داخلی جدید (اختیاری)" style="flex:1;min-width:180px">
+      <input id="newPass" type="password" placeholder="رمز جدید (اختیاری، حداقل ۶ کاراکتر)" style="flex:1;min-width:180px">
+      <button id="credBtn">اعمال</button>
+    </div>
+    <div id="credNote" style="font-size:11px;opacity:.7;margin-top:4px">این بخش نیاز به دیپلوی تابع admin-set-credentials دارد (فایل ۸ را ببین). رمز قبلی هرگز قابل‌دیدن نیست، فقط می‌توان رمز جدید ثبت کرد.</div>
+  </div>
+</div>
+
+<script>
+const CLOUD_URL='https://rjvjgxwfunafqwpnzwne.supabase.co';
+const CLOUD_KEY='sb_publishable_u_SupvLT_Ls43HyCJlf5dQ_G9AyF0kC';
+const AUTH_DOMAIN='@players.gahremani.local';
+const EDGE_FN_URL=CLOUD_URL+'/functions/v1/admin-set-credentials'; // deploy this first — see file 8
+const sb=window.supabase.createClient(CLOUD_URL,CLOUD_KEY);
+const $=id=>document.getElementById(id);
+const fa=n=>Math.floor(Number(n)||0).toLocaleString('fa-IR');
+async function rpc(name,payload){const {data,error}=await sb.rpc(name,payload||{});if(error)throw error;return data;}
+
+async function checkAdmin(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)return false;
+  try{return await rpc('gahremani_is_admin',{});}catch(e){return false;}
+}
+async function doLogin(){
+  $('loginErr').textContent='';
+  const u=$('lu').value.trim(), p=$('lp').value;
+  const email=u.toLowerCase().replace(/[^a-z0-9_.-]/g,'')+AUTH_DOMAIN;
+  const {error}=await sb.auth.signInWithPassword({email,password:p});
+  if(error){$('loginErr').textContent='ورود ناموفق: نام کاربری یا رمز اشتباه است';return;}
+  if(!(await checkAdmin())){$('loginErr').textContent='این حساب مدیر نیست';await sb.auth.signOut();return;}
+  $('login').style.display='none';$('panel').style.display='block';loadPlayers();
+}
+$('loginBtn').onclick=doLogin;$('lp').onkeydown=e=>{if(e.key==='Enter')doLogin();};
+$('logoutBtn').onclick=async()=>{await sb.auth.signOut();location.reload();};
+
+async function loadPlayers(q){
+  const rows=await rpc('gahremani_admin_list_players',{p_search:q||null,p_limit:150});
+  $('playerRows').innerHTML=rows.map(r=>`<tr class="${r.blocked?'blocked':r.flagged?'flagged':''}">
+    <td>${esc(r.username)}</td><td>${fa(r.wallet)}</td><td>${fa(r.diamonds)}</td><td>${fa(r.skin_count)}</td>
+    <td>${r.blocked?'<span class="pill bad">مسدود</span>':r.flagged?'<span class="pill bad">علامت‌دار</span>':'<span class="pill ok">عادی</span>'}</td>
+    <td>${new Date(r.updated_at).toLocaleString('fa-IR')}</td>
+    <td><button class="ghost" data-owner="${r.owner_hash}" data-name="${esc(r.username)}">جزئیات</button></td></tr>`).join('')||'<tr><td colspan="7">چیزی پیدا نشد</td></tr>';
+  document.querySelectorAll('[data-owner]').forEach(b=>b.onclick=()=>openDetail(b.dataset.owner,b.dataset.name));
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+$('searchBtn').onclick=()=>loadPlayers($('search').value);
+$('refreshBtn').onclick=()=>loadPlayers($('search').value);
+
+let curOwner=null;
+async function openDetail(owner,name){
+  curOwner=owner;$('detailCard').style.display='block';$('detailName').textContent='👤 '+name;
+  const d=await rpc('gahremani_admin_player_detail',{p_owner_hash:owner});
+  $('txList').innerHTML=(d.transactions||[]).map(t=>`<div>${new Date(t.created_at).toLocaleString('fa-IR')} — ${esc(t.kind)} ${t.amount>0?'+':''}${fa(t.amount)} ${t.currency} (${esc(t.reason)})</div>`).join('')||'بدون تراکنش';
+  $('suspectDetail').innerHTML=(d.suspects||[]).map(s=>`<div>${new Date(s.created_at).toLocaleString('fa-IR')} — ${esc(s.reason)} ${s.reviewed?'✅':'🚩'}</div>`).join('')||'موردی ثبت نشده';
+  $('deviceList').innerHTML='در حال بارگذاری...';
+  try{const sh=await rpc('gahremani_admin_shared_devices',{p_owner_hash:owner});
+    $('deviceList').innerHTML=sh.length?sh.map(x=>`<div>⚠️ احتمالاً همان فرد: ${esc(x.username||'(بی‌نام)')}</div>`).join(''):'موردی پیدا نشد (این سیگنال قابل‌اطمینان کامل نیست)';
+  }catch(e){$('deviceList').textContent='خطا در دریافت';}
+  await loadRecords(owner);
+  await loadSkinChecklist(owner, d.save?.skins||[]);
+  try{const email=await rpc('gahremani_admin_get_email',{p_owner_hash:owner});
+    $('emailLine').textContent=email?('ایمیل داخلی فعلی: '+email):'این حساب هنوز وارد نشده (لینک نشده)';
+  }catch(e){$('emailLine').textContent='خطا در دریافت ایمیل';}
+}
+async function loadRecords(owner){
+  const rows=await rpc('gahremani_admin_player_records',{p_owner_hash:owner});
+  $('recordRows').innerHTML=rows.map(r=>`<tr>
+    <td>${fa(r.week_no)}</td>
+    <td><input data-s1="${r.week_no}" value="${r.s1}" style="width:70px;padding:4px"></td>
+    <td><input data-s2="${r.week_no}" value="${r.s2}" style="width:70px;padding:4px"></td>
+    <td><input data-s3="${r.week_no}" value="${r.s3}" style="width:70px;padding:4px"></td>
+    <td>${r.finalized_rank?fa(r.finalized_rank):'—'}</td>
+    <td><button class="ghost" data-save-week="${r.week_no}">ذخیره</button> <button class="danger" data-del-week="${r.week_no}">حذف</button></td>
+  </tr>`).join('')||'<tr><td colspan="6">رکوردی ندارد</td></tr>';
+  document.querySelectorAll('[data-save-week]').forEach(b=>b.onclick=async()=>{
+    const w=b.dataset.saveWeek;
+    const s1=+document.querySelector(`[data-s1="${w}"]`).value, s2=+document.querySelector(`[data-s2="${w}"]`).value, s3=+document.querySelector(`[data-s3="${w}"]`).value;
+    const reason=prompt('دلیل ویرایش این رکورد:'); if(!reason)return;
+    const r=await rpc('gahremani_admin_edit_record',{p_owner_hash:curOwner,p_week_no:+w,p_s1:s1,p_s2:s2,p_s3:s3,p_reason:reason});
+    if(r?.ok){alert('ذخیره شد');loadRecords(curOwner);}else alert('خطا');
+  });
+  document.querySelectorAll('[data-del-week]').forEach(b=>b.onclick=async()=>{
+    if(!confirm('رکورد هفته '+b.dataset.delWeek+' کاملاً حذف شود؟'))return;
+    const reason=prompt('دلیل حذف:'); if(!reason)return;
+    const r=await rpc('gahremani_admin_delete_record',{p_owner_hash:curOwner,p_week_no:+b.dataset.delWeek,p_reason:reason});
+    if(r?.ok){alert('حذف شد');loadRecords(curOwner);}else alert('خطا');
+  });
+}
+async function loadSkinChecklist(owner,owned){
+  const all=await rpc('gahremani_admin_all_skin_ids',{});
+  const ownedSet=new Set(owned);
+  $('skinChecklist').innerHTML=all.map(id=>`<label style="border:1px solid #8b5cf6aa;border-radius:8px;padding:4px 8px;font-size:12px;display:flex;gap:4px;align-items:center">
+    <input type="checkbox" data-skin="${id}" ${ownedSet.has(id)?'checked':''}> ${id}</label>`).join('');
+}
+$('saveSkinsBtn').onclick=async()=>{
+  if(!curOwner)return;
+  const ids=[...document.querySelectorAll('[data-skin]')].filter(i=>i.checked).map(i=>i.dataset.skin);
+  if(!ids.includes('g_original'))ids.push('g_original');
+  const reason=prompt('دلیل تغییر اسکین‌ها:'); if(!reason)return;
+  const r=await rpc('gahremani_admin_set_skins',{p_owner_hash:curOwner,p_skins:ids,p_reason:reason});
+  if(r?.ok)alert('ذخیره شد'); else alert('خطا: '+(r?.reason||'نامشخص'));
+};
+$('credBtn').onclick=async()=>{
+  if(!curOwner)return;
+  const email=$('newEmail').value.trim(), pass=$('newPass').value;
+  if(!email&&!pass){alert('حداقل یکی از ایمیل یا رمز را پر کن');return;}
+  const userId=await rpc('gahremani_admin_get_user_id',{p_owner_hash:curOwner});
+  if(!userId){alert('این حساب هنوز لینک نشده (وارد نشده)');return;}
+  const {data:{session}}=await sb.auth.getSession();
+  try{
+    const res=await fetch(EDGE_FN_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},
+      body:JSON.stringify({target_user_id:userId,new_email:email||undefined,new_password:pass||undefined})});
+    const j=await res.json();
+    if(j.ok){alert('اعمال شد');$('newEmail').value='';$('newPass').value='';openDetail(curOwner,$('detailName').textContent.replace('👤 ',''));}
+    else alert('خطا: '+(j.reason||res.status));
+  }catch(e){alert('تابع admin-set-credentials هنوز دیپلوی نشده یا در دسترس نیست (فایل ۸ را ببین)');}
+};
+$('closeDetail').onclick=()=>{$('detailCard').style.display='none';curOwner=null;};
+$('flagBtn').onclick=async()=>{if(!curOwner)return;await rpc('gahremani_admin_set_flag',{p_owner_hash:curOwner,p_flagged:true,p_note:'manual flag'});loadPlayers($('search').value);};
+$('blockBtn').onclick=async()=>{if(!curOwner)return;if(!confirm('این بازیکن مسدود شود؟'))return;await rpc('gahremani_admin_set_block',{p_owner_hash:curOwner,p_blocked:true,p_note:'manual block'});loadPlayers($('search').value);};
+$('unblockBtn').onclick=async()=>{if(!curOwner)return;await rpc('gahremani_admin_set_block',{p_owner_hash:curOwner,p_blocked:false});loadPlayers($('search').value);};
+$('adjBtn').onclick=async()=>{
+  if(!curOwner)return;
+  const cur=$('adjCur').value,amt=parseInt($('adjAmt').value,10),reason=$('adjReason').value.trim();
+  if(!amt||!reason){alert('مقدار و دلیل را پر کن');return;}
+  const r=await rpc('gahremani_admin_adjust_balance',{p_owner_hash:curOwner,p_currency:cur,p_amount:amt,p_reason:reason});
+  if(r?.ok){alert('اعمال شد');openDetail(curOwner,$('detailName').textContent.replace('👤 ',''));loadPlayers($('search').value);}
+  else alert('خطا: '+(r?.reason||'نامشخص'));
+};
+$('suspectsBtn').onclick=async()=>{
+  const c=$('suspectsCard');c.style.display=c.style.display==='none'?'block':'none';
+  if(c.style.display==='block'){
+    const rows=await rpc('gahremani_admin_list_suspects',{p_only_unreviewed:true});
+    $('suspectsList').innerHTML=rows.map(s=>`<div class="row" style="border-bottom:1px solid #ffffff14;padding:6px 0">
+      <span style="flex:1">${new Date(s.created_at).toLocaleString('fa-IR')} — ${esc(s.username||'?')} — ${esc(s.reason)}</span>
+      <button class="ghost" data-view="${s.owner_hash}" data-name="${esc(s.username||'?')}">دیدن</button>
+      <button class="ghost" data-rev="${s.id}">بررسی شد</button></div>`).join('')||'موردی نیست';
+    document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>openDetail(b.dataset.view,b.dataset.name));
+    document.querySelectorAll('[data-rev]').forEach(b=>b.onclick=async()=>{await rpc('gahremani_admin_mark_reviewed',{p_id:+b.dataset.rev});$('suspectsBtn').click();$('suspectsBtn').click();});
+  }
+};
+(async()=>{ if(await checkAdmin()){$('login').style.display='none';$('panel').style.display='block';loadPlayers();} })();
+</script>
+</body></html>
