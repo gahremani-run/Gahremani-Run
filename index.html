@@ -288,7 +288,7 @@ html,body{overscroll-behavior:none}body.playing{touch-action:none}
   </div>
 </div>
 <div id="gr-countdown" aria-live="assertive"><img id="gr-countdown-number" alt="شمارش معکوس"></div>
-<div id="gr-changelog" role="dialog" aria-modal="true"><div class="box"><h2>✨ تغییرات Gahremani Run — نسخه 2.3.0</h2><ul><li>🔔 بخش اطلاعیه‌ها اضافه شد</li><li>🔑 صفحه‌ی ورود اصلاح شد و نام کاربری با لیدربورد یکی شد</li><li>🎯 بررسی دقیق‌تر امتیاز با فرمول واقعی بازی</li><li>💬 پشتیبانی تلگرام: @PUPPETEER_SUPPORT</li><li>🔑 ورود بازی حالا با نام کاربری و رمز عبور است</li><li>🔧 چند بهبود در بخش ذخیره‌سازی اطلاعات بازی</li><li>🎮 چند بهبود و رفع‌اشکال کوچک دیگر</li><li>🔧 بهبود در ذخیره‌سازی سکه، الماس و اسکین‌ها</li><li>🎥 دوربین حین پرش بیشتر بالا می‌آید تا دید جلو باز بماند</li><li>📜 منوی تغییرات نسخه حالا روی گوشی اسکرول می‌خورد</li><li>💎 جوایز لیدربورد هفتگی تغییر کرد: رتبه ۱: ۱۲۰ 💎، رتبه ۲: ۹۰ 💎، رتبه ۳: ۶۰ 💎</li><li>🦘 پرش کوتاه‌تر و دقیق‌تر با همان ارتفاع قبلی</li><li>🎥 دوربین حین پرش بالا می‌آید</li><li>🪙 سکه‌های گنبدی کوتاه‌تر و نیمه‌شفاف شدند</li><li>🎭 انیمیشن‌های کوتاه منو (سرتکان‌دادن، لرزیدن، شنا، مدیتیشن) با سرعت عادی چند بار تکرار می‌شوند تا ۵ ثانیه</li><li>🛠️ رفع باگ خرید شخصیت‌های جدید (ایرج و معبودی)</li><li>👆 سوایپ دقیق‌تر: هر کشیدن انگشت فقط یک لاین عوض می‌کند و پرش بعد از تغییر لاین و رول فوری کار می‌کند</li><li>🧬 ۲۱ کاراکتر و اسکین ۳بعدی با ۶ درجه کمیابی؛ باز کردن با سکه، الماس یا ماموریت</li><li>🏠 منوی اصلی جدید با نمایش کاراکتر انتخاب‌شده و انیمیشن‌های تصادفی</li><li>🏆 لیدربورد هفتگی و فصلی با جایزه‌ی الماس، قوانین، تایمر و پروفایل بازیکنان</li><li>👤 صفحه‌ی حساب کاربری با سابقه‌ی فصل‌ها و هفته‌ها</li><li>💎 واحد جدید الماس + ذخیره‌ی ابری اسکین‌ها، الماس و ماموریت‌ها</li><li>🎬 انیمیشن‌های اختصاصی برای هر گروه کاراکتر (پرش، دویدن، مرگ تصادفی، اسلاید و رول)</li><li>⚡ بارگذاری سریع‌تر: مدل‌ها در پوشه‌ی assets کش می‌شوند و بازی آفلاین هم اجرا می‌شود</li><li>👆 کنترل لمسی بهتر و امکان پرش از حالت رول و اسلاید</li></ul><button id="closeChangelog">متوجه شدم</button></div></div>
+<div id="gr-changelog" role="dialog" aria-modal="true"><div class="box"><h2>✨ تغییرات Gahremani Run — نسخه 2.3.1</h2><ul><li>🛠️ رفع باگ «به حساب وصل نشد» هنگام انتخاب نام کاربری بعد از ثبت‌نام</li></ul><button id="closeChangelog">متوجه شدم</button></div></div>
 <div id="powerHud" class="hidden" style="position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:8;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-weight:900;text-shadow:0 2px 4px #000"></div>
 <div id="controls" class="hidden" aria-hidden="true"></div>
 <div id="flash"></div>
@@ -1214,6 +1214,7 @@ function showAuthScreen(mode,prefill){
     $id('authSwitch').onclick=()=>{closeModal();resolve({ok:false,switchTo:mode==='signup'?'login':'signup'});};
   });
 }
+let pendingSignupName=null; // set only right after a NEW signup; claimed as the leaderboard name AFTER the account is linked (claiming it any earlier fails, since the account doesn't exist on the server yet)
 async function ensureLoggedIn(){
   const {data:{session}}=await sb.auth.getSession();
   if(session)return true;
@@ -1222,9 +1223,7 @@ async function ensureLoggedIn(){
   while(true){
     const r=await showAuthScreen(mode,prefill);
     if(r.ok){
-      if(mode==='signup'){
-        try{const cn=await cloudRpc('gahremani_claim_username',{p_new_name:r.username});if(cn?.ok)localStorage.setItem(PLAYER_NAME_KEY,cn.username);}catch(e){}
-      }
+      if(mode==='signup')pendingSignupName=r.username;
       return true;
     }
     if(r.switchTo)mode=r.switchTo; else return false;
@@ -1238,6 +1237,10 @@ async function initializeCloudSave(){
   try{
     const link=await cloudRpc('gahremani_link_account',{p_old_recovery_code:oldCode||null});
     if(link?.ok)localStorage.removeItem(CLOUD_CODE_KEY);
+    if(pendingSignupName){ // NOW the account exists server-side, so claiming the leaderboard name can succeed
+      try{const cn=await cloudRpc('gahremani_claim_username',{p_new_name:pendingSignupName});if(cn?.ok)localStorage.setItem(PLAYER_NAME_KEY,cn.username);}catch(e){}
+      pendingSignupName=null;
+    }
   }catch(e){console.warn('account link failed, will retry next load',e);}
   try{await pullServerState();}catch(e){console.warn('could not load server state',e);}
   cloudReady=true;
@@ -1880,7 +1883,7 @@ function animate(now){
 const menu=document.querySelector('#menu'),gameover=document.querySelector('#gameover'),hud=document.querySelector('#hud'),controls=document.querySelector('#controls'),scoreEl=document.querySelector('#score'),coinsEl=document.querySelector('#coins'),speedEl=document.querySelector('#speed'),finalScore=document.querySelector('#finalScore'),flash=document.querySelector('#flash'),start=document.querySelector('#start'),restart=document.querySelector('#restart');
 renderHighScores();renderShop();
 document.querySelector('#changeUsername')?.addEventListener('click',()=>changePlayerName());
-const GR_CHANGELOG_VERSION='2.3.0';const grChangelog=document.querySelector('#gr-changelog');
+const GR_CHANGELOG_VERSION='2.3.1';const grChangelog=document.querySelector('#gr-changelog');
 function showChangelog(){if(grChangelog)grChangelog.style.display='flex';}
 function closeChangelog(){if(grChangelog)grChangelog.style.display='none';try{localStorage.setItem('gahremaniRunSeenChangelog',GR_CHANGELOG_VERSION)}catch(e){}}
 document.querySelector('#showChangelog')?.addEventListener('click',showChangelog);document.querySelector('#closeChangelog')?.addEventListener('click',closeChangelog);
@@ -1942,7 +1945,7 @@ boot();
 <button id="gr-install-chip" type="button">نصب بازی روی گوشی</button>
 <script>
 (()=>{
-  const APP_VERSION='2.3.0';
+  const APP_VERSION='2.3.1';
   const VERSION_URL='./version.json';
   const shade=document.getElementById('gr-update-shade');
   const summary=document.getElementById('gr-update-summary');
